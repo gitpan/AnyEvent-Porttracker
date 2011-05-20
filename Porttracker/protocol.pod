@@ -554,6 +554,21 @@ Example:
      { "switch" : 27 }]
    < [5,1,[["Fa0/11"],["Fa0/21"], ... ,["Fa0/5"]]]
 
+=item "report_info" - returns the available report list
+
+This request returns the report list for the logged-in user.
+
+   > [<id>, "report_info"]
+   < [<id>, 1, [ [<gid>, <name>], ...]]
+
+The reply will contains an array for each report. Each array will have gid 
+and name of the report.
+
+Example:
+
+   > [1, "report_info"]
+   < [1,1,[["3865500631171148","New Report 1"]]]
+
 =item "user_view_info" - return the available views list
 
 This request returns the report views list for the logged-in user.
@@ -645,7 +660,7 @@ algorithm and privacy algorithm.
 Example:
 
    > [1, "realm_snmp_credential_list", "5100005442"]
-   < [1,1,[ ["10.1.0.0",16,[[2,["test"]], [3,"authPrivUser","authpass","privpass","md5","aes"]],1] ]]
+   < [1,1,[ ["10.1.0.0",16,[[2,["test"]], [3,"authPrivUser","authpass","privpass", null, "md5","aes"]],1] ]]
 
 =item "realm_snmp_credential_list_modify" - modify snmp credentials
 
@@ -661,7 +676,7 @@ format as returned by C<realm_snmp_credentials>.
 
 Example:
    > [1, "realm_snmp_credential_list_modify", "5100005442", [ ["10.0.0.0", 8], ["11.1.1.0", 24] ],
-            [ ["192.168.240.0", 24, [2, ["w0rld", "peace"], [3, "noAuthUser"]], 1] ]]
+            [ ["192.168.240.0", 24, [[2, ["w0rld", "peace"]], [3, "noAuthUser"]], 1] ]]
    < [1, 1]
 
 =item "realm_device_assignment_list" - list all assignable devices for a realm 
@@ -719,7 +734,11 @@ If only the realm-gid is specified then all the properties and their values retu
 
 valid properties are
 
-block_port_macs, stp_enabled, cdp_enabled, lldp_enabled
+snmp_parallel_requests, snmp_retries,
+snmp_timeout, skip_access_points,
+smtp_user, autoassign, autoassign_manual, skip_cisco_phones, skip_mitel_phones,
+block_port_macs, stp_enabled, cdp_enabled, lldp_enabled, ndp_enabled, bdp_enabled,
+edp_enabled, fdp_enabled
 
 Example:
 
@@ -869,20 +888,17 @@ and value will be in textual form.
 
 valid properties are
 
-normalization_algorithm, snmp_parallel_requests, session_timeout, snmp_retries,
-agni_verbose, domain, snmp_timeout, smtp_server, skip_access_points, max_history_length,
-smtp_user, autoassign, skip_cisco_phones, skip_mitel_phones, max_log_length
+session_timeout, domain, smtp_server, max_history_length,
+smtp_user, max_log_length
 
 Example:
 
    > [1, "global_settings"]
-   < [1,1,[["normalization_algorithm","loopback highest-ip lowest-ip"],
-        ["snmp_parallel_requests","10"],["session_timeout","86400"],["snmp_retries","5"],
-        ["agni_verbose",null],["domain",""],["snmp_timeout","4"],["smtp_server",""],
-        ["skip_access_points","1"],["max_history_length","0"],["smtp_user",""],["autoassign","1"],["skip_cisco_phones","1"]]]
+   < [1,1,[["domain",""],["smtp_server",""],
+        ["max_history_length","0"],["smtp_user",""]]]
 
-   > [1, "global_settings", ["normalization_algorithm", "session_timeout"]]
-   < [1,1,[["normalization_algorithm","loopback highest-ip lowest-ip"],["session_timeout","86400"]]]
+   > [1, "global_settings", ["session_timeout"]]
+   < [1,1,[["session_timeout","86400"]]]
 
 =item "global_settings_modify" - modify global settings
 
@@ -896,9 +912,8 @@ textual format.
 
 valid properties are
 
-normalization_algorithm, snmp_parallel_requests, session_timeout, snmp_retries,
-agni_verbose, domain, snmp_timeout, smtp_server, skip_access_points, max_history_length,
-smtp_user, autoassign, skip_cisco_phones, max_log_length, skip_mitel_phones, smtp_pass
+session_timeout, domain, smtp_server, max_history_length,
+smtp_user, max_log_length
 
 Example:
 
@@ -917,7 +932,7 @@ and value will be in textual form.
 
 valid properties are
 
-max_parallel_jobs, max_debug_scans, debug_level
+normalization_algorithm, max_parallel_jobs, max_debug_scans, debug_level
 
 Example:
 
@@ -1166,6 +1181,24 @@ Example:
                             [["Add Realms",0],["Global Settings",1]]]
    < [1, 1]
 
+=item "remote_backup" - runs the remote backup immediately
+
+   > [<id>, "remote_backup", <protocol>, <host>, <user>, <password>,
+                             <directory>, <email-recipient>]
+   < [<id>, 1]
+
+This request can be made without any arguments. When its requested without 
+arguments make sure backup settings configured in GUI. The valid values for 
+C<protocol> are C<SCP> and C<FTP>. The C<email-recipient> and C<directory> 
+arguments are optional.
+
+Example:
+
+   > [1, "remote_backup"]
+   < [1, 1]
+
+   > [1, "remote_backup", "SCP", "10.5.1.1", "admin", "admin", "/tmp"]
+   < [1, 1]
 
 =back
 

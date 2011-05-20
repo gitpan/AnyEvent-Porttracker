@@ -14,16 +14,15 @@ AnyEvent::Porttracker - Porttracker/PortIQ API client interface.
    ;
 
    # Example 1
-   # a simple request: ping the server
+   # a simple request: ping the server synchronously
 
-   $api->req ("ping", sub {
-      my ($api, $ok, $timestamp, $pid) = @_;
-      ...
-   });
+   my ($timestamp, $pid) = $api->req_sync ("ping");
 
    # Example 2
    # find all realms, start a discovery on all of them
    # and wait until all discovery processes have finished
+   # but execute individual discoveries in parallel,
+   # asynchronously
 
    my $cv = AE::cv;
 
@@ -37,8 +36,8 @@ AnyEvent::Porttracker - Porttracker/PortIQ API client interface.
          my ($gid, $name) = @$realm;
 
          $cv->begin;
-         $api->req (realm_discover => $realm->[0], sub {
-            warn "discovery for realm '$realm->[1]' finished\n";
+         $api->req (realm_discover => $gid, sub {
+            warn "discovery for realm '$name' finished\n";
             $cv->end;
          });
       }
@@ -56,6 +55,8 @@ AnyEvent::Porttracker - Porttracker/PortIQ API client interface.
       my ($api, $gid) = @_;
       warn "this just in: poll for realm <$gid> finished.\n";
    });
+
+   AE::cv->recv; # wait forever
 
 =head1 DESCRIPTION
 
@@ -95,6 +96,7 @@ package AnyEvent::Porttracker;
 
 use common::sense;
 
+use Carp ();
 use Scalar::Util ();
 
 use AnyEvent ();
@@ -104,7 +106,7 @@ use MIME::Base64 ();
 use Digest::HMAC_MD6 ();
 use JSON ();
 
-our $VERSION = '0.1';
+our $VERSION = '1.0';
 
 sub call {
    my ($self, $type, @args) = @_;
@@ -310,6 +312,26 @@ sub req {
    $_[0]{queue}
       ? push @{ $_[0]{queue} }, [@_]
       : &_req
+}
+
+=item @res = $api->req_sync ($type => @args)
+
+Similar to C<< ->req >>, but waits for the results of the request and on
+success, returns the values instead (without the success flag, and only
+the first value in scalar context). On failure, the method will C<croak>
+with the error message.
+
+=cut
+
+sub req_sync {
+   push @_, my $cv = AE::cv;
+   &req;
+   my ($ok, @res) = $cv->recv;
+
+   $ok
+      or Carp::croak $res[0];
+
+   wantarray ? @res : $res[0]
 }
 
 =item $api->req_failok ($type => @args, $callback->($api, $success, @reply))

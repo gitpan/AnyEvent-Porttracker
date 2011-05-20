@@ -12,16 +12,15 @@ SYNOPSIS
        ;
 
        # Example 1
-       # a simple request: ping the server
+       # a simple request: ping the server synchronously
 
-       $api->req ("ping", sub {
-          my ($api, $ok, $timestamp, $pid) = @_;
-          ...
-       });
+       my ($timestamp, $pid) = $api->req_sync ("ping");
 
        # Example 2
        # find all realms, start a discovery on all of them
        # and wait until all discovery processes have finished
+       # but execute individual discoveries in parallel,
+       # asynchronously
 
        my $cv = AE::cv;
 
@@ -35,8 +34,8 @@ SYNOPSIS
              my ($gid, $name) = @$realm;
 
              $cv->begin;
-             $api->req (realm_discover => $realm->[0], sub {
-                warn "discovery for realm '$realm->[1]' finished\n";
+             $api->req (realm_discover => $gid, sub {
+                warn "discovery for realm '$name' finished\n";
                 $cv->end;
              });
           }
@@ -54,6 +53,8 @@ SYNOPSIS
           my ($api, $gid) = @_;
           warn "this just in: poll for realm <$gid> finished.\n";
        });
+
+       AE::cv->recv; # wait forever
 
 DESCRIPTION
     Porttracker (<http://www.porttracker.com/>) is a product that (among
@@ -169,6 +170,12 @@ THE AnyEvent::Porttracker CLASS
 
               $ok or die "failed to set license";
            });
+
+    @res = $api->req_sync ($type => @args)
+        Similar to "->req", but waits for the results of the request and on
+        success, returns the values instead (without the success flag, and
+        only the first value in scalar context). On failure, the method will
+        "croak" with the error message.
 
     $api->req_failok ($type => @args, $callback->($api, $success, @reply))
         Just like "->req", with two differences: first, a failure will not
