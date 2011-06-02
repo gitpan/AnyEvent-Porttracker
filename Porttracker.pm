@@ -106,7 +106,7 @@ use MIME::Base64 ();
 use Digest::HMAC_MD6 ();
 use JSON ();
 
-our $VERSION = '1.0';
+our $VERSION = '1.01';
 
 sub call {
    my ($self, $type, @args) = @_;
@@ -589,7 +589,7 @@ L<AnyEvent>, L<http://www.porttracker.com/>, L<http://www.infoblox.com/en/produc
 
 =head1 AUTHOR
 
- Marc Lehmann <marc@porttracker.net>
+ Marc Lehmann <marc@nethype.de>
 
 =cut
 

@@ -1,5 +1,8 @@
 Revision history for AnyEvent::Porttracker
 
+1.01 Thu Jun  2 03:27:29 CEST 2011
+	- updated names.
+
 1.0  Sat May 21 00:55:20 CEST 2011
 	- add "req_sync" method, which might be easier for simple scripts.
         - updated the AnyEvent::Porttracker::protocol pod for porttracker 3.x.
